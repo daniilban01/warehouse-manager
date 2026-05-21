@@ -6,42 +6,66 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import Connection.ConnectionFactory;
 
+/**
+ * Generic Data Access Object class that implements common database operations using Java Reflection and Streams.
+ *
+ * @param <T> the type of the model class
+ */
 public class AbstractDAO<T> {
     protected static final Logger LOGGER = Logger.getLogger(AbstractDAO.class.getName());
 
     private final Class<T> type;
 
+    /**
+     * Initializes the DAO and determines the runtime class type using reflection.
+     */
     @SuppressWarnings("unchecked")
     public AbstractDAO() {
         this.type = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     }
 
+    /**
+     * Returns the primary key column name in the database table.
+     */
     private String getPrimaryKeyColumnName() {
-        if (type.getSimpleName().equalsIgnoreCase("Orders")) {
-            return "order_id";
-        }
-        return "id";
+        return type.getSimpleName().equalsIgnoreCase("Orders") ? "order_id" : "id";
     }
 
+    /**
+     * Returns the primary key field name in the Java class.
+     */
     private String getPrimaryKeyFieldName() {
-        if (type.getSimpleName().equalsIgnoreCase("Orders")) {
-            return "ordersId";
-        }
-        return "id";
+        return type.getSimpleName().equalsIgnoreCase("Orders") ? "ordersId" : "id";
     }
 
+    /**
+     * Maps a Java field name to its corresponding database column name.
+     */
+    private String mapFieldToColumn(String fieldName) {
+        if (fieldName.equalsIgnoreCase("ordersId")) return "order_id";
+        if (fieldName.equalsIgnoreCase("clientId")) return "id_client";
+        if (fieldName.equalsIgnoreCase("productId")) return "id_product";
+        return fieldName;
+    }
+
+    /**
+     * Generates a SELECT query string filtered by a specific field.
+     */
     private String createSelectQuery(String field) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("SELECT * FROM \"").append(type.getSimpleName().toLowerCase()).append("\" WHERE ").append(field).append(" = ?");
-        return sb.toString();
+        return "SELECT * FROM \"" + type.getSimpleName().toLowerCase() + "\" WHERE " + field + " = ?";
     }
 
+    /**
+     * Retrieves all records from the corresponding database table.
+     */
     public List<T> findAll() {
         Connection connection = null;
         PreparedStatement statement = null;
@@ -62,6 +86,9 @@ public class AbstractDAO<T> {
         return new ArrayList<>();
     }
 
+    /**
+     * Finds a single record by its primary key ID.
+     */
     public T findById(int id) {
         Connection connection = null;
         PreparedStatement statement = null;
@@ -84,33 +111,34 @@ public class AbstractDAO<T> {
         return null;
     }
 
+    /**
+     * Converts a database ResultSet into a list of Java objects using reflection and streams.
+     */
     private List<T> createObjects(ResultSet resultSet) {
-        List<T> list = new ArrayList<T>();
-        Constructor<?> ctor = null;
-        for (Constructor<?> c : type.getDeclaredConstructors()) {
-            if (c.getParameterCount() == 0) {
-                ctor = c;
-                break;
-            }
-        }
+        List<T> list = new ArrayList<>();
+
+        Constructor<?> ctor = Arrays.stream(type.getDeclaredConstructors())
+                .filter(c -> c.getParameterCount() == 0)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No default constructor found for " + type.getName()));
+        ctor.setAccessible(true);
+
         try {
             while (resultSet.next()) {
-                ctor.setAccessible(true);
                 T instance = (T) ctor.newInstance();
-                for (Field field : type.getDeclaredFields()) {
-                    field.setAccessible(true);
-                    String fieldName = field.getName();
-                    String dbColumnName = fieldName;
 
-                    if (fieldName.equalsIgnoreCase("ordersId")) {
-                        dbColumnName = "order_id";
+                Arrays.stream(type.getDeclaredFields()).forEach(field -> {
+                    try {
+                        field.setAccessible(true);
+                        String dbColumnName = mapFieldToColumn(field.getName());
+                        Object value = resultSet.getObject(dbColumnName);
+                        if (value != null) {
+                            field.set(instance, value);
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error mapping column to field: " + field.getName(), e);
                     }
-
-                    Object value = resultSet.getObject(dbColumnName);
-                    if (value != null) {
-                        field.set(instance, value);
-                    }
-                }
+                });
                 list.add(instance);
             }
         } catch (Exception e) {
@@ -120,41 +148,37 @@ public class AbstractDAO<T> {
         return list;
     }
 
+    /**
+     * Inserts an object's fields into the database table using reflection and streams.
+     */
     public T insert(T t) {
         Connection connection = null;
         PreparedStatement statement = null;
-        StringBuilder query = new StringBuilder("INSERT INTO \"");
-        query.append(type.getSimpleName().toLowerCase()).append("\" (");
 
-        Field[] fields = type.getDeclaredFields();
-        List<Field> fieldsToInsert = new ArrayList<>();
+        List<Field> fieldsToInsert = Arrays.stream(type.getDeclaredFields())
+                .filter(f -> !f.getName().equalsIgnoreCase("id")
+                        && !f.getName().equalsIgnoreCase("ordersId")
+                        && !f.getName().equalsIgnoreCase("billId"))
+                .collect(Collectors.toList());
 
-        for (Field field : fields) {
-            String name = field.getName();
-            if (!name.equalsIgnoreCase("id") && !name.equalsIgnoreCase("ordersId") && !name.equalsIgnoreCase("bill_id")) {
-                fieldsToInsert.add(field);
-            }
-        }
+        String columns = fieldsToInsert.stream()
+                .map(f -> mapFieldToColumn(f.getName()))
+                .collect(Collectors.joining(", "));
 
-        for (int i = 0; i < fieldsToInsert.size(); i++) {
-            query.append(fieldsToInsert.get(i).getName());
-            if (i < fieldsToInsert.size() - 1) query.append(", ");
-        }
+        String placeholders = fieldsToInsert.stream()
+                .map(f -> "?")
+                .collect(Collectors.joining(", "));
 
-        query.append(") VALUES (");
-        for (int i = 0; i < fieldsToInsert.size(); i++) {
-            query.append("?");
-            if (i < fieldsToInsert.size() - 1) query.append(", ");
-        }
-        query.append(")");
+        String query = "INSERT INTO \"" + type.getSimpleName().toLowerCase() + "\" (" + columns + ") VALUES (" + placeholders + ")";
 
         try {
             connection = ConnectionFactory.getConnection();
-            statement = connection.prepareStatement(query.toString());
+            statement = connection.prepareStatement(query);
 
             for (int i = 0; i < fieldsToInsert.size(); i++) {
-                fieldsToInsert.get(i).setAccessible(true);
-                statement.setObject(i + 1, fieldsToInsert.get(i).get(t));
+                Field field = fieldsToInsert.get(i);
+                field.setAccessible(true);
+                statement.setObject(i + 1, field.get(t));
             }
             statement.executeUpdate();
         } catch (SQLException | IllegalAccessException e) {
@@ -166,38 +190,37 @@ public class AbstractDAO<T> {
         return t;
     }
 
+    /**
+     * Updates an existing database record dynamically based on the object's field values.
+     */
     public T update(T t) {
         Connection connection = null;
         PreparedStatement statement = null;
-        StringBuilder query = new StringBuilder("UPDATE \"");
-        query.append(type.getSimpleName().toLowerCase()).append("\" SET ");
-
-        Field[] fields = type.getDeclaredFields();
-        List<Field> fieldsToUpdate = new ArrayList<>();
-        Field idField = null;
         String pkFieldName = getPrimaryKeyFieldName();
 
+        List<Field> fieldsToUpdate = Arrays.stream(type.getDeclaredFields())
+                .filter(f -> !f.getName().equalsIgnoreCase(pkFieldName))
+                .collect(Collectors.toList());
+
+        Field idField = Arrays.stream(type.getDeclaredFields())
+                .filter(f -> f.getName().equalsIgnoreCase(pkFieldName))
+                .findFirst()
+                .orElse(null);
+
+        String setClause = fieldsToUpdate.stream()
+                .map(f -> mapFieldToColumn(f.getName()) + " = ?")
+                .collect(Collectors.joining(", "));
+
+        String query = "UPDATE \"" + type.getSimpleName().toLowerCase() + "\" SET " + setClause + " WHERE " + getPrimaryKeyColumnName() + " = ?";
+
         try {
-            for (Field field : fields) {
-                if (!field.getName().equalsIgnoreCase(pkFieldName)) {
-                    fieldsToUpdate.add(field);
-                } else {
-                    idField = field;
-                }
-            }
-
-            for (int i = 0; i < fieldsToUpdate.size(); i++) {
-                query.append(fieldsToUpdate.get(i).getName()).append(" = ?");
-                if (i < fieldsToUpdate.size() - 1) query.append(", ");
-            }
-            query.append(" WHERE ").append(getPrimaryKeyColumnName()).append(" = ?");
-
             connection = ConnectionFactory.getConnection();
-            statement = connection.prepareStatement(query.toString());
+            statement = connection.prepareStatement(query);
 
             for (int i = 0; i < fieldsToUpdate.size(); i++) {
-                fieldsToUpdate.get(i).setAccessible(true);
-                statement.setObject(i + 1, fieldsToUpdate.get(i).get(t));
+                Field field = fieldsToUpdate.get(i);
+                field.setAccessible(true);
+                statement.setObject(i + 1, field.get(t));
             }
 
             if (idField != null) {
@@ -215,6 +238,9 @@ public class AbstractDAO<T> {
         return t;
     }
 
+    /**
+     * Deletes a database record matching the provided ID.
+     */
     public void delete(int id) throws SQLException {
         Connection connection = null;
         PreparedStatement statement = null;

@@ -7,11 +7,17 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Graphical User Interface for managing client operations (Add, Edit, Delete).
+ */
 public class ClientView extends JFrame {
     private JTable table;
     private ClientBLL clientBLL;
     private TableGenerator tableGenerator;
 
+    /**
+     * Initializes the client view frame, table component, and CRUD event listeners.
+     */
     public ClientView() {
         clientBLL = new ClientBLL();
         tableGenerator = new TableGenerator();
@@ -142,6 +148,9 @@ public class ClientView extends JFrame {
         add(btnPanel, BorderLayout.SOUTH);
     }
 
+    /**
+     * Fetches up-to-date client records and refreshes the display table.
+     */
     private void refreshTable() {
         List<Client> clients = clientBLL.findAllClients();
         DefaultTableModel model = tableGenerator.createTable(clients);

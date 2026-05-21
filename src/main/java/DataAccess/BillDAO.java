@@ -8,9 +8,17 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Data Access Object class for handling database operations related to Bills.
+ */
 public class BillDAO {
     protected static final Logger LOGGER = Logger.getLogger(BillDAO.class.getName());
 
+    /**
+     * Inserts a new bill record into the database.
+     *
+     * @param bill the bill object containing log data to insert
+     */
     public void insert(Bill bill) {
         Connection connection = null;
         PreparedStatement statement = null;
@@ -19,8 +27,8 @@ public class BillDAO {
             connection = ConnectionFactory.getConnection();
             statement = connection.prepareStatement(query);
 
-            statement.setString(1, bill.client_name());
-            statement.setString(2, bill.product_name());
+            statement.setString(1, bill.clientName());
+            statement.setString(2, bill.productName());
             statement.setInt(3, bill.quantity());
             statement.setTimestamp(4, Timestamp.valueOf(bill.orderTime()));
 
@@ -33,6 +41,18 @@ public class BillDAO {
         }
     }
 
+    /**
+     * Finds a single bill record by its unique ID.
+     *
+     * @param id the identifier of the bill
+     * @return the found Bill object, or null if no match is found
+     */
+    /**
+     * Finds a single bill record by its unique ID.
+     *
+     * @param id the identifier of the bill
+     * @return the found Bill object, or null if no match is found
+     */
     public Bill findById(int id) {
         Connection connection = null;
         PreparedStatement statement = null;
@@ -62,6 +82,11 @@ public class BillDAO {
         return null;
     }
 
+    /**
+     * Retrieves all bill records from the database.
+     *
+     * @return a list of all existing bills
+     */
     public List<Bill> findAll() {
         List<Bill> list = new ArrayList<>();
         Connection connection = null;

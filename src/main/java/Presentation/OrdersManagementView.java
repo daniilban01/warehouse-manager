@@ -12,12 +12,18 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Graphical User Interface for managing orders and viewing generated log bills using a tabbed panel layout.
+ */
 public class OrdersManagementView extends JFrame {
     private OrdersBLL ordersBLL;
     private ClientBLL clientBLL;
     private ProductBLL productBLL;
     private TableGenerator tableGenerator;
 
+    /**
+     * Initializes the orders management frame window and populates its main tabs.
+     */
     public OrdersManagementView() {
         ordersBLL = new OrdersBLL();
         clientBLL = new ClientBLL();
@@ -36,6 +42,11 @@ public class OrdersManagementView extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    /**
+     * Creates the tab panel dedicated to selecting a client, product, quantity, and placing a new order.
+     *
+     * @return the constructed order entry JPanel component
+     */
     private JPanel createOrdersPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
 
@@ -79,17 +90,17 @@ public class OrdersManagementView extends JFrame {
                 DefaultTableModel model = new DefaultTableModel(columns, 0);
 
                 for (Model.Orders o : ordersList) {
-                    Client client = clientBLL.findClientById(o.getId_client());
-                    Product product = productBLL.findProductById(o.getId_product());
+                    Client client = clientBLL.findClientById(o.getClientId());
+                    Product product = productBLL.findProductById(o.getProductId());
 
                     String clientName = (client != null) ? client.getName() : "Unknown Client";
                     String productName = (product != null) ? product.getName() : "Unknown Product";
 
                     Object[] row = {
                             o.getOrdersId(),
-                            o.getId_client(),
+                            o.getClientId(),
                             clientName,
-                            o.getId_product(),
+                            o.getProductId(),
                             productName,
                             o.getQuantity()
                     };
@@ -130,6 +141,11 @@ public class OrdersManagementView extends JFrame {
         return mainPanel;
     }
 
+    /**
+     * Creates the tab panel dedicated to displaying the log of immutable bill receipts.
+     *
+     * @return the constructed log display JPanel component
+     */
     private JPanel createBillsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         JTable billsTable = new JTable();

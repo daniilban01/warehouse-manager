@@ -7,11 +7,17 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Graphical User Interface for managing product operations (Add, Edit, Delete).
+ */
 public class ProductView extends JFrame {
     private JTable table;
     private ProductBLL productBLL;
     private TableGenerator tableGenerator;
 
+    /**
+     * Initializes the product view frame, components, and event listeners for CRUD operations.
+     */
     public ProductView() {
         productBLL = new ProductBLL();
         tableGenerator = new TableGenerator();
@@ -109,6 +115,9 @@ public class ProductView extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    /**
+     * Fetches up-to-date product records and refreshes the display table.
+     */
     private void refreshTable() {
         try {
             List<Product> products = productBLL.findAllProducts();
