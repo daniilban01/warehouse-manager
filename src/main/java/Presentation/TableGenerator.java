@@ -7,8 +7,17 @@ import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
+/**
+ * Utility class that uses Java Reflection to dynamically generate a DefaultTableModel from any list of objects.
+ */
 public class TableGenerator {
 
+    /**
+     * Dynamically creates a table model using the object fields as columns and their values as rows.
+     *
+     * @param objects the list of model objects to convert into table data
+     * @return a populated DefaultTableModel, or an empty model if the list is null or empty
+     */
     public DefaultTableModel createTable(List<?> objects) {
         if (objects == null || objects.isEmpty()) {
             return new DefaultTableModel();

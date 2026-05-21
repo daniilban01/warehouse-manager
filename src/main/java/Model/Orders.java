@@ -1,16 +1,29 @@
 package Model;
 
+/**
+ * Model class representing an Order entity in the system.
+ */
 public class Orders {
     private int ordersId;
-    private int id_client;
-    private int id_product;
+    private int clientId;
+    private int productId;
     private int quantity;
 
+    /**
+     * Default constructor required for reflection and object instantiation.
+     */
     public Orders(){}
 
+    /**
+     * Constructs a new Order with all necessary references and the requested quantity.
+     *
+     * @param id_client  the unique identifier of the client placing the order
+     * @param id_product the unique identifier of the product being ordered
+     * @param quantity   the number of units requested
+     */
     public Orders(int id_client, int id_product, int quantity) {
-        this.id_client = id_client;
-        this.id_product = id_product;
+        this.clientId = id_client;
+        this.productId = id_product;
         this.quantity = quantity;
     }
 
@@ -22,20 +35,20 @@ public class Orders {
         this.ordersId = ordersId;
     }
 
-    public int getId_client() {
-        return id_client;
+    public int getClientId() {
+        return clientId;
     }
 
-    public void setId_client(int id_client) {
-        this.id_client = id_client;
+    public void setClientId(int clientId) {
+        this.clientId = clientId;
     }
 
-    public int getId_product() {
-        return id_product;
+    public int getProductId() {
+        return productId;
     }
 
-    public void setId_product(int id_product) {
-        this.id_product = id_product;
+    public void setProductId(int productId) {
+        this.productId = productId;
     }
 
     public int getQuantity() {
@@ -48,6 +61,6 @@ public class Orders {
 
     @Override
     public String toString(){
-        return "Order [id=" + id_client+", id=" + id_product+", quantity=" + quantity + "]";
+        return "Order [id=" + clientId +", id=" + productId +", quantity=" + quantity + "]";
     }
 }

@@ -8,7 +8,9 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
+/**
+ * Factory class that manages database connections using the Singleton pattern.
+ */
 public class ConnectionFactory {
     private static final Logger LOGGER = Logger.getLogger(ConnectionFactory.class.getName());
     private static final String DRIVER = "org.postgresql.Driver";
@@ -18,6 +20,9 @@ public class ConnectionFactory {
 
     private static ConnectionFactory singleInstance = new ConnectionFactory();
 
+    /**
+     * Private constructor to prevent instantiation and load the database driver.
+     */
     private ConnectionFactory() {
         try {
             Class.forName(DRIVER);
@@ -26,6 +31,11 @@ public class ConnectionFactory {
         }
     }
 
+    /**
+     * Creates and returns a new active connection to the database.
+     *
+     * @return the created Connection object, or null if a database error occurs
+     */
     private Connection createConnection() {
         Connection connection = null;
         try {
@@ -37,10 +47,20 @@ public class ConnectionFactory {
         return connection;
     }
 
+    /**
+     * Provides access to the singleton instance to obtain a database connection.
+     *
+     * @return an active Connection object
+     */
     public static Connection getConnection() {
         return singleInstance.createConnection();
     }
 
+    /**
+     * Safely closes the given database connection.
+     *
+     * @param connection the Connection to close
+     */
     public static void close(Connection connection) {
         if (connection != null) {
             try {
@@ -51,6 +71,11 @@ public class ConnectionFactory {
         }
     }
 
+    /**
+     * Safely closes the given database statement.
+     *
+     * @param statement the Statement to close
+     */
     public static void close(Statement statement) {
         if (statement != null) {
             try {
@@ -61,6 +86,11 @@ public class ConnectionFactory {
         }
     }
 
+    /**
+     * Safely closes the given database result set.
+     *
+     * @param resultSet the ResultSet to close
+     */
     public static void close(ResultSet resultSet) {
         if (resultSet != null) {
             try {
@@ -70,5 +100,4 @@ public class ConnectionFactory {
             }
         }
     }
-
 }

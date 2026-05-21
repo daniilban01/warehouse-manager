@@ -1,5 +1,8 @@
 package Model;
 
+/**
+ * Model class representing a Client entity in the system.
+ */
 public class Client {
     private int id;
     private String name;
@@ -7,8 +10,19 @@ public class Client {
     private String email;
     private int age;
 
+    /**
+     * Default constructor required for reflection and object instantiation.
+     */
     public Client(){}
 
+    /**
+     * Constructs a new Client without an ID (useful for insert operations).
+     *
+     * @param name    the name of the client
+     * @param address the address of the client
+     * @param email   the email address of the client
+     * @param age     the age of the client
+     */
     public Client( String name, String address, String email, int age) {
         this.name = name;
         this.address = address;
@@ -16,6 +30,15 @@ public class Client {
         this.age = age;
     }
 
+    /**
+     * Constructs a new Client with all fields initialized.
+     *
+     * @param id      the unique identifier of the client
+     * @param name    the name of the client
+     * @param address the address of the client
+     * @param email   the email address of the client
+     * @param age     the age of the client
+     */
     public Client(int id, String name, String address, String email, int age) {
         this.id = id;
         this.name = name;

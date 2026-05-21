@@ -3,6 +3,9 @@ package Presentation;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Main dashboard view for the Warehouse Management System, acting as the primary navigation window.
+ */
 public class MainView extends JFrame {
 
     private JButton btnClients;
@@ -10,6 +13,9 @@ public class MainView extends JFrame {
     private JButton btnOrders;
     private JLabel lblTitle;
 
+    /**
+     * Initializes the main menu frame layout, application title, and navigation buttons.
+     */
     public MainView() {
         setTitle("Warehouse Management System");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -38,11 +44,15 @@ public class MainView extends JFrame {
 
         add(lblTitle);
         add(btnClients);
-
         add(btnProducts);
         add(btnOrders);
     }
 
+    /**
+     * Application entry point that launches the main dashboard.
+     *
+     * @param args command-line arguments (not used)
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             new MainView().setVisible(true);
